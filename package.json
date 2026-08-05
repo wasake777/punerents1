@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "bash scripts/integration.sh",
+    "test:stress": "bash scripts/integration.sh --stress"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1086.0",
