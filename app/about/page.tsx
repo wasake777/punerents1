@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { OG_IMAGE } from "@/lib/seo";
 
 const title = "About PuneRents - real rents, no brokers";
 const description =
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/about" },
-  openGraph: { title, description, url: "https://punerents.com/about" },
+  openGraph: { title, description, url: "https://punerents.com/about", images: [OG_IMAGE] },
 };
 
 export default function AboutPage() {

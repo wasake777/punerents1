@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "PuneRents - real rents in Pune & Pimpri-Chinchwad, no brokers",
     description:
       "Crowdsourced map of actual rents paid by tenants across Pune and Pimpri-Chinchwad. Anonymous, free, no brokerage.",
@@ -63,7 +63,12 @@ const siteJsonLd = {
   url: "https://punerents.com",
   description:
     "Crowdsourced map of real rents paid by tenants across Pune and Pimpri-Chinchwad - no brokers, no asking-price inflation.",
-  publisher: { "@type": "Organization", name: "PuneRents", url: "https://punerents.com" },
+  publisher: {
+    "@type": "Organization",
+    name: "PuneRents",
+    url: "https://punerents.com",
+    logo: "https://punerents.com/apple-icon",
+  },
 };
 
 export default function RootLayout({
@@ -95,14 +100,14 @@ export default function RootLayout({
         )}
         {/* Google Analytics (gtag.js) */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-N19GE9TK50"
+          src="https://www.googletagmanager.com/gtag/js?id=G-5RZ603487W"
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-N19GE9TK50');`}
+            gtag('config', 'G-5RZ603487W');`}
         </Script>
         {children}
       </body>

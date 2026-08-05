@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AREAS, REGIONS } from "@/lib/areas";
 import { POSTS } from "@/app/blog/_posts";
 import { computeAreaStats, fetchAllPinsServer } from "@/lib/areaStats";
+import { OG_IMAGE } from "@/lib/seo";
 import { inrShort } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: "/rent" },
-    openGraph: { title, description, url: "https://punerents.com/rent" },
+    openGraph: { title, description, url: "https://punerents.com/rent", images: [OG_IMAGE] },
   };
 }
 

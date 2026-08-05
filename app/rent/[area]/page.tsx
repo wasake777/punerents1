@@ -5,6 +5,7 @@ import { Area, AREAS, findArea, nearbyAreas } from "@/lib/areas";
 import { bhkLabel, computeAreaStats, fetchAllPinsServer } from "@/lib/areaStats";
 import { formatINR } from "@/lib/stats";
 import { inrShort } from "@/lib/types";
+import { OG_IMAGE } from "@/lib/seo";
 import { POSTS } from "@/app/blog/_posts";
 
 // A short, stable set of guides cross-linked from every area page; the full
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/rent/${area.slug}` },
-    openGraph: { title, description, url: `https://punerents.com/rent/${area.slug}` },
+    openGraph: { title, description, url: `https://punerents.com/rent/${area.slug}`, images: [OG_IMAGE] },
   };
 }
 

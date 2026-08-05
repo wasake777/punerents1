@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { OG_IMAGE } from "@/lib/seo";
 import { POSTS } from "./_posts";
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
     description:
       "Practical guides to renting in Pune and Pimpri-Chinchwad - deposits, agreements, areas and no-broker tips, backed by real tenant-reported rents.",
     url: "https://punerents.com/blog",
+    images: [OG_IMAGE],
   },
 };
 
@@ -29,7 +31,12 @@ export default function BlogIndexPage() {
     url: "https://punerents.com/blog",
     description:
       "Practical guides to renting in Pune and Pimpri-Chinchwad, backed by crowdsourced tenant-reported rents.",
-    publisher: { "@type": "Organization", name: "PuneRents", url: "https://punerents.com" },
+    publisher: {
+      "@type": "Organization",
+      name: "PuneRents",
+      url: "https://punerents.com",
+      logo: "https://punerents.com/apple-icon",
+    },
     blogPost: POSTS.map((p) => ({
       "@type": "BlogPosting",
       headline: p.meta.title,

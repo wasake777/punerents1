@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { OG_IMAGE } from "@/lib/seo";
 import { POSTS, findPost } from "../_posts";
 
 export const dynamicParams = false;
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://punerents.com/blog/${slug}`,
       type: "article",
       publishedTime: post.meta.date,
+      images: [OG_IMAGE],
     },
   };
 }
@@ -54,8 +56,19 @@ export default async function BlogPostPage({ params }: Props) {
       url,
       datePublished: meta.date,
       dateModified: meta.updated ?? meta.date,
-      author: { "@type": "Organization", name: "PuneRents", url: "https://punerents.com" },
-      publisher: { "@type": "Organization", name: "PuneRents", url: "https://punerents.com" },
+      image: "https://punerents.com/opengraph-image",
+      author: {
+        "@type": "Organization",
+        name: "PuneRents",
+        url: "https://punerents.com",
+        logo: "https://punerents.com/apple-icon",
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "PuneRents",
+        url: "https://punerents.com",
+        logo: "https://punerents.com/apple-icon",
+      },
       mainEntityOfPage: url,
     },
     {
