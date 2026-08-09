@@ -140,7 +140,15 @@ export default function PinCard({
     ...(pin.maintenance_included === false ? ["Maintenance extra"] : []),
     ...(pin.gated === true ? ["🏘 Gated society"] : []),
     ...(pin.gated === false ? ["🚪 Not gated"] : []),
-    ...(pin.tenant_type ? [pin.tenant_type === "Family" ? "👨‍👩‍👧 Family" : "🎓 Bachelor"] : []),
+    ...(pin.tenant_type
+      ? [
+          pin.tenant_type === "Family"
+            ? "👨‍👩‍👧 Family"
+            : pin.tenant_type === "Bachelor"
+              ? "🎓 Bachelor"
+              : "👨‍👩‍👧🎓 Family & Bachelor",
+        ]
+      : []),
     ...(pin.pets === "Yes" ? ["🐕 Pets OK"] : []),
     ...(pin.pets === "No" ? ["🚫 No pets"] : []),
     ...(pin.parking_count != null
@@ -162,7 +170,7 @@ export default function PinCard({
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-white">
           <div className="flex items-start justify-between gap-2 p-4 pb-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Monthly rent
                 {mine && (
                   <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 font-bold normal-case tracking-normal text-emerald-700">
@@ -170,12 +178,12 @@ export default function PinCard({
                   </span>
                 )}
               </p>
-              <p className="text-2xl font-extrabold text-slate-900">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
                 {formatINR(pin.rent)}
-                <span className="text-sm font-medium text-slate-400">/month</span>
+                <span className="text-sm font-semibold text-slate-400">/month</span>
               </p>
               {pin.deposit != null && (
-                <p className="text-xs text-slate-500">Deposit: {formatINR(pin.deposit)}</p>
+                <p className="text-xs font-medium text-slate-500">Deposit: {formatINR(pin.deposit)}</p>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -202,11 +210,11 @@ export default function PinCard({
           {chips.map((c, i) => (
             <span
               key={i}
-              className="rounded-md px-2 py-1 text-[11px] font-semibold"
+              className="rounded-md px-2 py-1 text-xs font-bold"
               style={
                 i === 0
                   ? { background: BHK_COLORS[pin.bhk], color: "#fff" }
-                  : { background: "#f1f5f9", color: "#475569" }
+                  : { background: "#f1f5f9", color: "#334155" }
               }
             >
               {c}
@@ -226,7 +234,7 @@ export default function PinCard({
         )}
 
         <div>
-          <p className="text-xs font-bold text-slate-700">Community rating</p>
+          <p className="text-[13px] font-extrabold text-slate-900">Community rating</p>
           <div className="mt-1 flex items-center gap-2">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -296,13 +304,13 @@ export default function PinCard({
         ) : !showAlertForm ? (
           <button
             onClick={() => setShowAlertForm(true)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-left text-[13px] font-bold text-slate-800 hover:bg-slate-50"
           >
             🔔 Email me when a flat opens within 1 km
           </button>
         ) : (
           <div className="rounded-xl border border-slate-200 p-3">
-            <p className="text-xs font-bold text-slate-700">
+            <p className="text-[13px] font-extrabold text-slate-900">
               🔔 Be the first to know when a flat opens here
             </p>
             <p className="mt-0.5 text-[11px] text-slate-500">
@@ -335,7 +343,7 @@ export default function PinCard({
         )}
 
         <div>
-          <p className="text-xs font-bold text-slate-700">
+          <p className="text-[13px] font-extrabold text-slate-900">
             Comments {comments.length > 0 && `(${comments.length})`}
           </p>
           {socialError && (

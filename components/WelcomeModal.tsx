@@ -35,10 +35,10 @@ export default function WelcomeModal({ onClose, onTour }: Props) {
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
-        <h2 className="text-xl font-bold">
-          <Logo size={26} />
+        <h2 className="text-2xl font-extrabold tracking-tight">
+          <Logo size={28} />
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm font-medium text-slate-600">
           What Pune really pays in rent - mapped anonymously by the people
           paying it. No brokers.
         </p>
@@ -62,7 +62,7 @@ export default function WelcomeModal({ onClose, onTour }: Props) {
               ))}
             </span>
             <span>
-              <span className="font-semibold">Every price tag is a real rent</span>{" "}
+              <span className="font-bold text-slate-900">Every price tag is a real rent</span>{" "}
               someone pays - the colour shows the flat size. Tap one to see the
               deposit, society and what the tenant says about living there.
             </span>
@@ -70,7 +70,7 @@ export default function WelcomeModal({ onClose, onTour }: Props) {
           <li className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0 text-base">🔍</span>
             <span>
-              <span className="font-semibold">Hunting for a flat?</span> Tap
+              <span className="font-bold text-slate-900">Hunting for a flat?</span> Tap
               “Find a flat” and say what you need once - matching flats land
               straight in your inbox.
             </span>
@@ -78,7 +78,7 @@ export default function WelcomeModal({ onClose, onTour }: Props) {
           <li className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0 text-base">📍</span>
             <span>
-              <span className="font-semibold">Already renting?</span> Add your
+              <span className="font-bold text-slate-900">Already renting?</span> Add your
               rent anonymously - takes 30 seconds, and the next person
               negotiates with real numbers.
             </span>
@@ -87,7 +87,7 @@ export default function WelcomeModal({ onClose, onTour }: Props) {
 
         <button
           onClick={onTour}
-          className="mt-5 w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
+          className="mt-5 w-full rounded-xl bg-emerald-600 py-2.5 text-[15px] font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-500"
         >
           Show me around →
         </button>

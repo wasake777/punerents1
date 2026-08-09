@@ -121,13 +121,13 @@ function loadMyPinIds(): string[] {
 // One "glass pill" token for every floating map control so the chrome reads
 // as a single system; primary CTAs get coloured shadows to lift off the map.
 const GLASS_BTN =
-  "rounded-full bg-white/90 px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/90 dark:text-slate-200 dark:ring-white/10 dark:hover:bg-slate-800";
+  "rounded-full bg-white/95 px-3.5 py-2 text-[13px] font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800";
 const GLASS_BTN_ON =
-  "rounded-full bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-slate-900/20 backdrop-blur-md transition dark:bg-slate-100 dark:text-slate-900";
+  "rounded-full bg-slate-900 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-slate-900/25 backdrop-blur-md transition dark:bg-slate-100 dark:text-slate-900";
 const CTA_EMERALD =
-  "rounded-full bg-emerald-600 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-500 active:scale-[0.98]";
+  "rounded-full bg-emerald-600 text-[15px] font-bold text-white shadow-lg shadow-emerald-600/40 transition hover:bg-emerald-500 active:scale-[0.98]";
 const CTA_ORANGE =
-  "rounded-full bg-orange-600 text-sm font-semibold text-white shadow-lg shadow-orange-600/30 transition hover:bg-orange-500 active:scale-[0.98]";
+  "rounded-full bg-orange-600 text-[15px] font-bold text-white shadow-lg shadow-orange-600/40 transition hover:bg-orange-500 active:scale-[0.98]";
 
 const TRANSIT_LEGEND: [string, string][] = [
   ["#9333ea", "Purple Line"],
@@ -493,10 +493,10 @@ export default function App() {
     >
       <span className="mt-0.5">{o.emoji}</span>
       <span>
-        <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <span className="block text-sm font-bold text-slate-900 dark:text-slate-100">
           {o.title}
         </span>
-        <span className="block text-xs text-slate-500 dark:text-slate-400">
+        <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
           {o.sub}
         </span>
       </span>
@@ -510,7 +510,7 @@ export default function App() {
       {myPins.length > 0 && (
         <button
           onClick={handleMyPin}
-          className="rounded-full bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-600/30 transition hover:bg-emerald-500"
+          className="rounded-full bg-emerald-600 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-emerald-600/40 transition hover:bg-emerald-500"
         >
           📍 {myPins.length > 1 ? `My pins (${myPins.length})` : "My pin"}
         </button>
@@ -519,7 +519,7 @@ export default function App() {
         onClick={handleToggleAvailable}
         className={
           availableMode
-            ? "rounded-full bg-orange-600 px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-orange-600/30 transition"
+            ? "rounded-full bg-orange-600 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-orange-600/40 transition"
             : GLASS_BTN
         }
       >
@@ -562,7 +562,7 @@ export default function App() {
       >
         🛰 Satellite
       </button>
-      <div className="flex overflow-hidden rounded-full bg-white/90 text-xs font-semibold shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md dark:bg-slate-800/90 dark:ring-white/10">
+      <div className="flex overflow-hidden rounded-full bg-white/95 text-[13px] font-bold shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
         {(
           [
             ["pune", "Pune"],
@@ -575,7 +575,7 @@ export default function App() {
             className={`px-3.5 py-2 transition ${
               city === key
                 ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             }`}
           >
             {label}
@@ -633,22 +633,24 @@ export default function App() {
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 p-2 sm:p-3">
         {/* md+: brand card · centered search · action buttons */}
         <div className="hidden items-start justify-between gap-2 md:flex">
-          <div className="pointer-events-auto rounded-2xl bg-white/90 px-4 py-3 shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md dark:bg-slate-800/90 dark:ring-white/10">
-            <h1 className="text-lg font-extrabold leading-tight tracking-tight">
-              <Logo size={24} />
+          <div className="pointer-events-auto rounded-2xl bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
+            <h1 className="text-xl font-extrabold leading-tight tracking-tight">
+              <Logo size={26} />
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-[13px] font-medium text-slate-600 dark:text-slate-300">
               What people really pay - tap any price tag ·{" "}
-              {pins.length.toLocaleString("en-IN")} pins
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {pins.length.toLocaleString("en-IN")} pins
+              </span>
               {!isLive && (
-                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700">
+                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-700">
                   demo data
                 </span>
               )}
             </p>
             <a
               href="/rent"
-              className="mt-0.5 inline-block text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+              className="mt-0.5 inline-block text-[13px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
             >
               Area rent guide →
             </a>
@@ -736,22 +738,24 @@ export default function App() {
                 onClick={() => setMoreOpen(false)}
               />
               <div className="pointer-events-auto absolute right-0 top-full z-20 mt-1.5 flex max-h-[70dvh] w-max max-w-[calc(100vw-1rem)] flex-col items-stretch gap-1.5 overflow-y-auto overscroll-contain">
-                <div className="rounded-2xl bg-white/90 px-3.5 py-2.5 text-xs shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md dark:bg-slate-800/90 dark:ring-white/10">
-                  <p className="text-sm font-bold">
-                    <Logo size={18} />
+                <div className="rounded-2xl bg-white/95 px-3.5 py-2.5 text-xs shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
+                  <p className="text-base font-extrabold tracking-tight">
+                    <Logo size={20} />
                   </p>
-                  <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 font-medium text-slate-600 dark:text-slate-300">
                     What people really pay ·{" "}
-                    {pins.length.toLocaleString("en-IN")} pins
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      {pins.length.toLocaleString("en-IN")} pins
+                    </span>
                     {!isLive && (
-                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700">
+                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-700">
                         demo data
                       </span>
                     )}
                   </p>
                   <a
                     href="/rent"
-                    className="mt-0.5 inline-block font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                    className="mt-0.5 inline-block font-bold text-emerald-700 hover:underline dark:text-emerald-400"
                   >
                     Area rent guide →
                   </a>
@@ -822,7 +826,7 @@ export default function App() {
       {/* Picking banner */}
       {picking && !picked && (
         <div className="absolute inset-x-0 top-24 z-10 flex justify-center px-4">
-          <div className="animate-pulse rounded-full bg-slate-900/90 px-5 py-2.5 text-sm font-medium text-white shadow-lg ring-1 ring-white/15 backdrop-blur">
+          <div className="animate-pulse rounded-full bg-slate-900/90 px-5 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/15 backdrop-blur">
             {PICK_BANNERS[picking]}
           </div>
         </div>
@@ -830,9 +834,9 @@ export default function App() {
 
       {/* Transit legend */}
       {showTransit && (
-        <div className="absolute left-3 top-20 z-10 rounded-2xl bg-white/90 px-3.5 py-2.5 shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md dark:bg-slate-800/90 dark:ring-white/10">
+        <div className="absolute left-3 top-20 z-10 rounded-2xl bg-white/95 px-3.5 py-2.5 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
           {TRANSIT_LEGEND.map(([color, label]) => (
-            <div key={label} className="flex items-center gap-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+            <div key={label} className="flex items-center gap-2 py-0.5 text-xs font-bold text-slate-800 dark:text-slate-200">
               <span className="h-1 w-5 rounded" style={{ backgroundColor: color }} />
               {label}
             </div>
@@ -849,7 +853,7 @@ export default function App() {
         <p
           className={`${
             legendOpen ? "block" : "hidden"
-          } rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-medium text-slate-600 shadow ring-1 ring-slate-900/10 backdrop-blur dark:bg-slate-800/85 dark:text-slate-300 dark:ring-white/10 md:block`}
+          } rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow ring-1 ring-slate-900/15 backdrop-blur dark:bg-slate-800/95 dark:text-slate-200 dark:ring-white/15 md:block`}
         >
           Tag colour = flat size · tap to filter
           {matches && matches.length > 0 && " · 🟠 available flat"}
@@ -860,10 +864,10 @@ export default function App() {
             <button
               key={bhk}
               onClick={() => setBhkFilter((f) => (f === bhk ? null : bhk))}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-md shadow-slate-900/10 backdrop-blur-md transition ${
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold shadow-lg shadow-slate-900/15 backdrop-blur-md transition ${
                 bhkFilter === bhk
                   ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                  : "bg-white/90 text-slate-700 ring-1 ring-slate-900/10 hover:bg-white dark:bg-slate-800/90 dark:text-slate-200 dark:ring-white/10 dark:hover:bg-slate-800"
+                  : "bg-white/95 text-slate-900 ring-1 ring-slate-900/15 hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800"
               } ${bhkFilter && bhkFilter !== bhk ? "opacity-50" : ""}`}
             >
               <span
@@ -878,7 +882,7 @@ export default function App() {
           <button
             onClick={() => setLegendOpen((o) => !o)}
             aria-expanded={legendOpen}
-            className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/90 dark:text-slate-200 dark:ring-white/10 dark:hover:bg-slate-800 md:hidden"
+            className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[13px] font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800 md:hidden"
           >
             <span
               className="inline-block h-2.5 w-2.5 rounded-full"
@@ -894,7 +898,7 @@ export default function App() {
                 setMatches(null);
                 setAvailableMode(false);
               }}
-              className="rounded-full bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-orange-600/30 transition hover:bg-orange-500"
+              className="rounded-full bg-orange-600 px-3 py-1.5 text-[13px] font-bold text-white shadow-lg shadow-orange-600/40 transition hover:bg-orange-500"
             >
               ✕ {availableMode ? `Hide ${matches.length} available` : `Clear ${matches.length} matches`}
             </button>
@@ -1000,7 +1004,7 @@ export default function App() {
 
       {toast && (
         <div className="absolute inset-x-0 bottom-24 z-20 flex justify-center px-4">
-          <div className="max-w-md rounded-2xl bg-slate-900/90 px-4 py-3 text-sm text-white shadow-xl ring-1 ring-white/15 backdrop-blur">
+          <div className="max-w-md rounded-2xl bg-slate-900/90 px-4 py-3 text-sm font-medium text-white shadow-xl ring-1 ring-white/15 backdrop-blur">
             {toast}
           </div>
         </div>

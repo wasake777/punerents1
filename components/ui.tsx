@@ -29,10 +29,10 @@ export function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+      className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
         active
           ? CHIP_ACTIVE[accent]
-          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
       }`}
     >
       {children}
@@ -49,7 +49,7 @@ export function Field({
 }) {
   return (
     <div>
-      <span className="text-xs font-semibold text-slate-600">{label}</span>
+      <span className="text-[13px] font-bold text-slate-800">{label}</span>
       <div className="mt-1.5 flex flex-wrap gap-1.5">{children}</div>
     </div>
   );

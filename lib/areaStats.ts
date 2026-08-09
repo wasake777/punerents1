@@ -102,8 +102,12 @@ export function computeAreaStats(pins: RentPin[] | null, area: Area): AreaStats 
     available: true,
     count: inArea.length,
     byBhk,
-    bachelorCount: inArea.filter((p) => p.tenant_type === "Bachelor").length,
-    familyCount: inArea.filter((p) => p.tenant_type === "Family").length,
+    bachelorCount: inArea.filter(
+      (p) => p.tenant_type === "Bachelor" || p.tenant_type === "Both",
+    ).length,
+    familyCount: inArea.filter(
+      (p) => p.tenant_type === "Family" || p.tenant_type === "Both",
+    ).length,
     medianRent: median(inArea.map((p) => p.rent)),
     latestReport: inArea.length ? inArea[0].created_at : null,
   };

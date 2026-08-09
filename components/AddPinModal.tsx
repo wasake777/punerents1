@@ -45,6 +45,20 @@ export default function AddPinModal({ location, onClose, onSubmit }: Props) {
     value: T,
   ) => setter(current === value ? null : value);
 
+  // Family and Bachelor toggle independently; both selected is stored as "Both".
+  const toggleTenant = (value: "Family" | "Bachelor") => {
+    const other = value === "Family" ? "Bachelor" : "Family";
+    setTenant(
+      tenant === value
+        ? null
+        : tenant === "Both"
+          ? other
+          : tenant === other
+            ? "Both"
+            : value,
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const rentNum = Number(rent);
@@ -108,7 +122,7 @@ export default function AddPinModal({ location, onClose, onSubmit }: Props) {
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-bold">What do you pay here?</h2>
+      <h2 className="text-xl font-extrabold tracking-tight">What do you pay here?</h2>
       <p className="mt-0.5 text-xs text-slate-500">
         100% anonymous - location is rounded to ~100m. Only rent, size and BHK
         are required; everything else makes your pin more useful.
@@ -216,14 +230,14 @@ export default function AddPinModal({ location, onClose, onSubmit }: Props) {
           </Field>
           <Field label="Who lives here?">
             <Chip
-              active={tenant === "Family"}
-              onClick={() => toggle(setTenant, tenant, "Family")}
+              active={tenant === "Family" || tenant === "Both"}
+              onClick={() => toggleTenant("Family")}
             >
               👨‍👩‍👧 Family
             </Chip>
             <Chip
-              active={tenant === "Bachelor"}
-              onClick={() => toggle(setTenant, tenant, "Bachelor")}
+              active={tenant === "Bachelor" || tenant === "Both"}
+              onClick={() => toggleTenant("Bachelor")}
             >
               🎓 Bachelor
             </Chip>

@@ -154,7 +154,7 @@ export default function FindFlatModal({
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-bold">
+      <h2 className="text-xl font-extrabold tracking-tight">
         {interest ? "Tell us about you" : "Find a flat near this spot"}
       </h2>
       {interest ? (

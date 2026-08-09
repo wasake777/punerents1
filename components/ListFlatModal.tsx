@@ -79,7 +79,7 @@ export default function ListFlatModal({ location, onClose, onSubmit }: Props) {
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-bold">List your flat - free, no broker</h2>
+      <h2 className="text-xl font-extrabold tracking-tight">List your flat - free, no broker</h2>
       <p className="mt-0.5 text-xs text-slate-500">
         Your contact is <b>never shown on the map</b>. It&apos;s emailed only to
         seekers whose budget, size and location match.

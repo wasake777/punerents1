@@ -226,6 +226,11 @@ alter table rent_pins add column if not exists society text
 alter table rent_pins add column if not exists note text
   check (char_length(note) <= 140);
 
+-- Pins can report both family and bachelor tenants ('Both').
+alter table rent_pins drop constraint if exists rent_pins_tenant_type_check;
+alter table rent_pins add constraint rent_pins_tenant_type_check
+  check (tenant_type in ('Family','Bachelor','Both'));
+
 -- Community rating (1–5 stars) on a pin. Anonymous, append-only.
 create table if not exists pin_ratings (
   id         uuid primary key default gen_random_uuid(),

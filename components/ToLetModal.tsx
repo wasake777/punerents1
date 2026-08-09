@@ -71,7 +71,7 @@ export default function ToLetModal({ location, onClose, onSubmit }: Props) {
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-bold">🪧 Spot a To-Let</h2>
+      <h2 className="text-xl font-extrabold tracking-tight">🪧 Spot a To-Let</h2>
       <p className="mt-0.5 text-xs text-slate-500">
         See a To-Let board? Put it on the map - help the next flat-hunter skip
         the broker.

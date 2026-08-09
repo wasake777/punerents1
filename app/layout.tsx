@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-// Single modern grotesque for the whole app; weight contrast (500 body /
-// 700-800 headings) does the typographic work.
-const jakarta = Plus_Jakarta_Sans({
+// Single characterful grotesque for the whole app. Its heavy weights echo the
+// hand-painted To-Let signboards the app is about; weight contrast (regular
+// body / 700-800 headings) does the typographic work.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   display: "swap",
 });
@@ -82,7 +83,7 @@ export default function RootLayout({
           attributes into <body> before React hydrates. */}
       <body
         suppressHydrationWarning
-        className={`${jakarta.className} h-full bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100`}
+        className={`${bricolage.className} h-full bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100`}
       >
         {/* Apply the saved (or system) theme before first paint - no flash. */}
         <script

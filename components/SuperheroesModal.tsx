@@ -35,7 +35,7 @@ export default function SuperheroesModal({ spots, onClose }: Props) {
     <Modal onClose={onClose}>
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-bold">🦸 Superheroes</h2>
+          <h2 className="text-xl font-extrabold tracking-tight">🦸 Superheroes</h2>
           <p className="mt-0.5 text-xs text-slate-500">
             People who spotted To-Let boards so you skip the broker.{" "}
             {spots.length.toLocaleString("en-IN")} boards on the map so far.

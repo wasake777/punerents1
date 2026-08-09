@@ -121,7 +121,7 @@ export default function LiveStatsModal({ pins, onClose, onViewPin }: Props) {
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-bold">📊 Live Stats</h2>
+      <h2 className="text-xl font-extrabold tracking-tight">📊 Live Stats</h2>
       <p className="mt-0.5 text-xs text-slate-500">
         Real data from Pune &amp; Pimpri-Chinchwad renters ·{" "}
         {pins.length.toLocaleString("en-IN")} pins across the map

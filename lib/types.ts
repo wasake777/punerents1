@@ -3,7 +3,7 @@ export type Bhk = "1RK" | "1BHK" | "2BHK" | "3BHK" | "4BHK+";
 export type HousingType = "Society" | "Standalone building" | "Wada" | "Gaothan/Village";
 
 export type PinFurnishing = "Furnished" | "Unfurnished";
-export type TenantType = "Family" | "Bachelor";
+export type TenantType = "Family" | "Bachelor" | "Both";
 export type PetsPolicy = "Yes" | "No" | "Not sure";
 
 export interface RentPin {

@@ -148,7 +148,7 @@ export default function SearchBar({ onGo, onLocate, leading, trailing }: Props) 
     <div ref={boxRef} className="pointer-events-auto relative w-full">
       <form
         onSubmit={search}
-        className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2.5 shadow-md shadow-slate-900/10 ring-1 ring-slate-900/10 backdrop-blur-md transition focus-within:ring-2 focus-within:ring-emerald-500 dark:bg-slate-800/90 dark:ring-white/10"
+        className="flex items-center gap-2 rounded-full bg-white/95 px-4 py-2.5 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition focus-within:ring-2 focus-within:ring-emerald-500 dark:bg-slate-800/95 dark:ring-white/15"
       >
         {leading ?? (
           <svg
@@ -170,7 +170,7 @@ export default function SearchBar({ onGo, onLocate, leading, trailing }: Props) 
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="Search neighbourhood or area…"
-          className="min-w-0 flex-1 bg-transparent text-sm placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold placeholder:font-medium placeholder:text-slate-500 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-400"
         />
         {query && (
           <button
@@ -185,25 +185,25 @@ export default function SearchBar({ onGo, onLocate, leading, trailing }: Props) 
         {trailing}
       </form>
       {searching && (
-        <p className="absolute mt-1.5 w-full rounded-2xl bg-white px-3.5 py-2.5 text-xs text-slate-400 shadow-xl shadow-slate-900/15 ring-1 ring-slate-900/10 dark:bg-slate-800 dark:ring-white/10">
+        <p className="absolute mt-1.5 w-full rounded-2xl bg-white px-3.5 py-2.5 text-[13px] font-medium text-slate-500 shadow-xl shadow-slate-900/20 ring-1 ring-slate-900/15 dark:bg-slate-800 dark:ring-white/15">
           Searching…
         </p>
       )}
       {(open || results) && !searching && (
-        <div className="absolute z-20 mt-1.5 w-full rounded-2xl bg-white p-1.5 shadow-xl shadow-slate-900/15 ring-1 ring-slate-900/10 dark:bg-slate-800 dark:ring-white/10">
+        <div className="absolute z-20 mt-1.5 w-full rounded-2xl bg-white p-1.5 shadow-xl shadow-slate-900/20 ring-1 ring-slate-900/15 dark:bg-slate-800 dark:ring-white/15">
           <button
             onClick={locate}
-            className="block w-full rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+            className="block w-full rounded-xl px-2.5 py-2 text-left text-[13px] font-bold text-emerald-700 transition hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
           >
             📍 Use my current location
           </button>
           {failed && (
-            <p className="px-2.5 py-2 text-xs text-red-500">
+            <p className="px-2.5 py-2 text-[13px] font-medium text-red-500">
               Search is unavailable right now - try again in a moment.
             </p>
           )}
           {results?.length === 0 && (
-            <p className="px-2.5 py-2 text-xs text-slate-400">
+            <p className="px-2.5 py-2 text-[13px] font-medium text-slate-500">
               Nothing found inside Pune / Pimpri-Chinchwad.
             </p>
           )}
@@ -217,7 +217,7 @@ export default function SearchBar({ onGo, onLocate, leading, trailing }: Props) 
                 skipNextRef.current = true;
                 setQuery(r.display_name.split(",")[0]);
               }}
-              className="block w-full truncate rounded-xl px-2.5 py-2 text-left text-xs text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50"
+              className="block w-full truncate rounded-xl px-2.5 py-2 text-left text-[13px] font-semibold text-slate-800 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
             >
               {r.display_name}
             </button>

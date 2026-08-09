@@ -32,13 +32,14 @@ export function LogoMark({ size = 24 }: { size?: number }) {
   );
 }
 
-/** Mark + two-tone "PuneRents" wordmark, inheriting the parent's font. */
+/** Mark + two-tone "PuneRents" wordmark, inheriting the parent's font size.
+    Always extrabold - the wordmark is signage, not body text. */
 export default function Logo({ size = 24 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-2">
       <LogoMark size={size} />
-      <span>
-        Pune<span className="text-emerald-600">Rents</span>
+      <span className="font-extrabold tracking-tight">
+        Pune<span className="text-emerald-600 dark:text-emerald-500">Rents</span>
       </span>
     </span>
   );
