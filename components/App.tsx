@@ -64,6 +64,7 @@ const WelcomeModal = dynamic(() => import("./WelcomeModal"));
 const AddHereMenu = dynamic(() => import("./AddHereMenu"));
 const LiveStatsModal = dynamic(() => import("./LiveStatsModal"));
 const FlagModal = dynamic(() => import("./FlagModal"));
+const ContributePrompt = dynamic(() => import("./ContributePrompt"));
 
 export type City = "pune" | "pcmc";
 export type PickPurpose = "rent" | "list" | "seek" | "tolet";
@@ -96,6 +97,10 @@ const ADD_OPTIONS: {
   },
 ];
 
+// Purposes reachable by URL, so /rent pages (and any campaign link) can hand
+// the visitor straight into a contribution flow.
+const ADD_PARAMS: PickPurpose[] = ["rent", "list", "seek", "tolet"];
+
 const PICK_BANNERS: Record<PickPurpose, string> = {
   rent: "Tap the map at your building's location",
   list: "Tap the map where your flat is",
@@ -107,6 +112,19 @@ const PICK_BANNERS: Record<PickPurpose, string> = {
 // the only "identity" - it lets the user's own pins stay marked ("You") and
 // findable via the 📍 My pin button across visits on the same device.
 const MY_PINS_KEY = "punerents_my_pins";
+
+// Someone who just registered as a seeker is the best contributor the app will
+// ever have in front of it - they rent somewhere today, and they have just
+// taken data out of the map. Ask at most once a month, and never once they've
+// actually pinned something.
+const CONTRIBUTE_ASK_KEY = "punerents_contribute_asked";
+const CONTRIBUTE_ASK_COOLDOWN_MS = 30 * 24 * 3600_000;
+
+function shouldAskToContribute(myPinCount: number): boolean {
+  if (myPinCount > 0) return false;
+  const last = Number(window.localStorage.getItem(CONTRIBUTE_ASK_KEY) ?? 0);
+  return !Number.isFinite(last) || Date.now() - last > CONTRIBUTE_ASK_COOLDOWN_MS;
+}
 
 function loadMyPinIds(): string[] {
   try {
@@ -161,6 +179,8 @@ export default function App() {
   );
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedToLetId, setSelectedToLetId] = useState<string | null>(null);
+  // Match count to show in the post-seeker "add your rent" ask; null = no ask.
+  const [askContribute, setAskContribute] = useState<number | null>(null);
   // Item awaiting a flag reason - drives FlagModal.
   const [flagging, setFlagging] = useState<{
     kind: "pin" | "tolet";
@@ -201,9 +221,15 @@ export default function App() {
     if (document.documentElement.classList.contains("dark")) setTheme("dark");
   }, []);
 
-  // First visit → one-time explainer of what the dots are.
+  // First visit → one-time explainer of what the dots are. Skipped when the
+  // URL already says what the visitor came to do (?add=…): they clicked
+  // "Add your rent" on a /rent page, and a modal over the map would make them
+  // find that flow all over again.
   useEffect(() => {
-    if (!window.localStorage.getItem("punerents_welcomed")) setShowWelcome(true);
+    const wantsToAdd = new URLSearchParams(window.location.search).has("add");
+    if (!wantsToAdd && !window.localStorage.getItem("punerents_welcomed")) {
+      setShowWelcome(true);
+    }
     setMyPinIds(loadMyPinIds());
   }, []);
 
@@ -218,6 +244,13 @@ export default function App() {
       if (Number.isFinite(lat) && Number.isFinite(lng) && inPMR(lat, lng)) {
         setFocus({ lat, lng, at: Date.now(), zoom: 14 });
       }
+    }
+    // /?add=rent lands the visitor *inside* the flow they asked for, with the
+    // "tap your building" banner already up. Without this the SEO pages' "Add
+    // your rent" button dropped people on a bare map to rediscover it.
+    const add = params.get("add");
+    if (add && ADD_PARAMS.includes(add as PickPurpose)) {
+      setPicking(add as PickPurpose);
     }
     const sharedPin = params.get("pin");
     const sharedToLet = sharedPin ? null : params.get("tolet");
@@ -376,6 +409,10 @@ export default function App() {
     closeModal();
     setMatches(found);
     setAvailableMode(false);
+    if (shouldAskToContribute(myPinIds.length)) {
+      window.localStorage.setItem(CONTRIBUTE_ASK_KEY, String(Date.now()));
+      setAskContribute(found.length);
+    }
     setToast(
       found.length > 0
         ? `${found.length} matching ${found.length === 1 ? "flat" : "flats"} right now - shown in orange. You'll be emailed as new ones appear.`
@@ -949,6 +986,16 @@ export default function App() {
           spot={selectedToLet}
           onClose={() => setSelectedToLetId(null)}
           onReport={handleReportToLet}
+        />
+      )}
+      {askContribute !== null && (
+        <ContributePrompt
+          matchCount={askContribute}
+          onClose={() => setAskContribute(null)}
+          onAdd={() => {
+            setAskContribute(null);
+            setPicking("rent");
+          }}
         />
       )}
       {flagging && (

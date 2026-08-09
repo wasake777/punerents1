@@ -103,7 +103,10 @@ export default async function RentHubPage() {
       <p className="mt-12 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
         All figures are medians of crowdsourced tenant reports - free, anonymous and broker-free.
         Renting soon? Check the going rate here before you negotiate, then{" "}
-        <Link href="/" className="text-emerald-700 hover:underline dark:text-emerald-400">
+        <Link
+          href="/?add=rent"
+          className="text-emerald-700 hover:underline dark:text-emerald-400"
+        >
           add your rent to the map
         </Link>{" "}
         to help the next person.

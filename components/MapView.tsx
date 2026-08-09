@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Basemap, toMapTypeId } from "@/lib/basemap";
 import {
@@ -171,6 +171,9 @@ export default function MapView({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  // Flips once the Maps script has built the map, so effects that need it can
+  // re-run instead of silently no-opping on their first pass.
+  const [mapReady, setMapReady] = useState(false);
   const markerLibRef = useRef<google.maps.MarkerLibrary | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const clustererRef = useRef<MarkerClusterer | null>(null);
@@ -254,6 +257,10 @@ export default function MapView({
       });
       mapRef.current = map;
       infoWindowRef.current = new InfoWindow();
+      // Lets effects that need a live map re-run once it exists. Without this a
+      // focus set before the Maps script finished loading (any /?at=… deep
+      // link) was dropped and never retried.
+      setMapReady(true);
 
       // --- Geolocate ("my current location") - blue dot + accuracy circle ---
       locationRef.current = {
@@ -704,12 +711,14 @@ export default function MapView({
 
   // Search result / new pin → fly there. `at` makes repeat searches re-fly;
   // `zoom` lets a new pin land below cluster level (default suits search).
+  // Depends on mapReady too: a deep link (/?at=…, /?pin=…) sets focus while the
+  // Maps script is still loading, and that first run has no map to pan.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !focus) return;
     map.panTo({ lat: focus.lat, lng: focus.lng });
     map.setZoom(focus.zoom ?? 15);
-  }, [focus]);
+  }, [focus, mapReady]);
 
   // "My current location" → blue dot + accuracy circle + fly-to.
   useEffect(() => {

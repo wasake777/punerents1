@@ -215,11 +215,13 @@ export default async function AreaPage({ params }: Props) {
         >
           View {area.name} on the rent map →
         </Link>
+        {/* Deep-links into the add-rent flow centred on this area, so the
+            intent survives the click - a bare "/" made people rediscover it. */}
         <Link
-          href="/"
+          href={`/?add=rent&at=${area.lat},${area.lng}`}
           className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800"
         >
-          + Add your rent
+          + Add your rent in {area.name}
         </Link>
       </div>
 
