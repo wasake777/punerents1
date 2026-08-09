@@ -433,3 +433,109 @@ describe("area alerts", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("flagging", () => {
+  // The old flag path took only a pin_id and let the caller's browser be the
+  // sole judge of "one flag per person". These lock in the two properties that
+  // replaced it: a reason is mandatory, and the reporter's identity comes from
+  // the request's IP rather than anything the client can set.
+  const FLAG = {
+    kind: "report_pin",
+    payload: { pin_id: "11111111-1111-1111-1111-111111111111", reason: "spam" },
+  };
+
+  function rpcArgs(name: string) {
+    return rpcMock.mock.calls.find((c) => c[0] === name)?.[1] as Record<string, unknown>;
+  }
+
+  it("passes a valid flag through to the RPC", async () => {
+    const res = await POST(request(FLAG));
+    expect(res.status).toBe(200);
+    expect(rpcArgs("report_pin")).toMatchObject({
+      pin_id: FLAG.payload.pin_id,
+      reason: "spam",
+    });
+  });
+
+  it("rejects a flag with no reason", async () => {
+    const res = await POST(
+      request({ kind: "report_pin", payload: { pin_id: FLAG.payload.pin_id } })
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/reason/i);
+    expect(rpcArgs("report_pin")).toBeUndefined();
+  });
+
+  it("rejects a reason outside the allow-list", async () => {
+    const res = await POST(
+      request({
+        kind: "report_pin",
+        payload: { pin_id: FLAG.payload.pin_id, reason: "i_just_dont_like_it" },
+      })
+    );
+    expect(res.status).toBe(400);
+    expect(rpcArgs("report_pin")).toBeUndefined();
+  });
+
+  it("derives reporter_hash from the IP and ignores any client-supplied one", async () => {
+    const res = await POST(
+      request(
+        { ...FLAG, payload: { ...FLAG.payload, reporter_hash: "pretend-im-someone-else" } },
+        { "x-forwarded-for": "203.0.113.9" }
+      )
+    );
+    expect(res.status).toBe(200);
+    const args = rpcArgs("report_pin");
+    expect(args.reporter_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(args.reporter_hash).not.toBe("pretend-im-someone-else");
+  });
+
+  it("gives two different IPs two different reporter hashes", async () => {
+    await POST(request(FLAG, { "x-forwarded-for": "203.0.113.1" }));
+    const first = rpcArgs("report_pin").reporter_hash;
+    vi.clearAllMocks();
+    rpcMock.mockResolvedValue({ data: true, error: null });
+    await POST(request(FLAG, { "x-forwarded-for": "203.0.113.2" }));
+    expect(rpcArgs("report_pin").reporter_hash).not.toBe(first);
+  });
+
+  it("carries the claimed rent so the queue can check the story", async () => {
+    const res = await POST(
+      request({
+        kind: "report_pin",
+        payload: { pin_id: FLAG.payload.pin_id, reason: "wrong_price", claimed_rent: 18000 },
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(rpcArgs("report_pin")).toMatchObject({ claimed_rent: 18000 });
+  });
+
+  it("drops payload keys that aren't on the flag allow-list", async () => {
+    await POST(
+      request({
+        kind: "report_pin",
+        payload: { ...FLAG.payload, hidden: true, report_count: 99 },
+      })
+    );
+    const args = rpcArgs("report_pin");
+    expect(args).not.toHaveProperty("hidden");
+    expect(args).not.toHaveProperty("report_count");
+  });
+
+  it("requires a captcha once Turnstile is configured", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "secret";
+    const res = await POST(request(FLAG));
+    expect(res.status).toBe(403);
+    expect(rpcArgs("report_pin")).toBeUndefined();
+  });
+
+  it("only accepts to-let reasons that exist for to-lets", async () => {
+    const res = await POST(
+      request({
+        kind: "report_tolet",
+        payload: { spot_id: FLAG.payload.pin_id, reason: "wrong_price" },
+      })
+    );
+    expect(res.status).toBe(400); // a spotted board has no rent to be wrong
+  });
+});

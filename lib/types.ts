@@ -161,3 +161,33 @@ export function daysAgo(iso: string): string {
   if (d < 365) return `${Math.floor(d / 30)}mo ago`;
   return `${Math.floor(d / 365)}y ago`;
 }
+
+// --- Flag reasons -----------------------------------------------------------
+// A flag has to say what's wrong. It gives the admin queue something to triage,
+// and the friction alone stops most drive-by flagging. Values must match the
+// check constraints on pin_reports / tolet_reports (schema v9) and the
+// allow-list in app/api/submit/route.ts.
+
+export type PinFlagReason =
+  | "wrong_price" | "not_a_rental" | "spam" | "duplicate" | "offensive" | "other";
+
+export type ToLetFlagReason = Exclude<PinFlagReason, "wrong_price">;
+
+export const PIN_FLAG_REASONS: { value: PinFlagReason; label: string; hint: string }[] = [
+  { value: "wrong_price", label: "Rent is wrong", hint: "the amount doesn't match reality" },
+  { value: "not_a_rental", label: "Not a rental", hint: "shop, office, or nothing there" },
+  { value: "duplicate", label: "Duplicate", hint: "same flat is already pinned" },
+  { value: "spam", label: "Spam or advert", hint: "broker listing or promotion" },
+  { value: "offensive", label: "Offensive", hint: "abusive or personal content" },
+  { value: "other", label: "Something else", hint: "tell us below" },
+];
+
+export const TOLET_FLAG_REASONS = PIN_FLAG_REASONS.filter(
+  (r) => r.value !== "wrong_price"
+) as { value: ToLetFlagReason; label: string; hint: string }[];
+
+export interface PinFlag {
+  reason: PinFlagReason;
+  claimed_rent?: number | null;
+  note?: string | null;
+}

@@ -35,6 +35,7 @@ import {
   NewRentPin,
   NewSeeker,
   NewToLetSpot,
+  PinFlag,
   RentPin,
   ToLetSpot,
 } from "@/lib/types";
@@ -62,6 +63,7 @@ const ToLetCard = dynamic(() => import("./ToLetCard"));
 const WelcomeModal = dynamic(() => import("./WelcomeModal"));
 const AddHereMenu = dynamic(() => import("./AddHereMenu"));
 const LiveStatsModal = dynamic(() => import("./LiveStatsModal"));
+const FlagModal = dynamic(() => import("./FlagModal"));
 
 export type City = "pune" | "pcmc";
 export type PickPurpose = "rent" | "list" | "seek" | "tolet";
@@ -159,6 +161,11 @@ export default function App() {
   );
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [selectedToLetId, setSelectedToLetId] = useState<string | null>(null);
+  // Item awaiting a flag reason - drives FlagModal.
+  const [flagging, setFlagging] = useState<{
+    kind: "pin" | "tolet";
+    id: string;
+  } | null>(null);
   // Listing the user tapped "I'm interested" on → pre-filled seeker form.
   const [interest, setInterest] = useState<MatchPreviewItem | null>(null);
   const [showSuperheroes, setShowSuperheroes] = useState(false);
@@ -384,37 +391,50 @@ export default function App() {
     setToast("🪧 On the map! You just saved someone a broker fee. Superhero ✨");
   };
 
-  // One report per browser per item - stops a single person from hiding a pin
-  // solo by flagging it three times.
+  // Remembers what this browser has already flagged. Purely a courtesy so the
+  // same person isn't asked twice - the rule that actually counts is the
+  // one-row-per-reporter constraint in the database (schema v9), because
+  // localStorage is trivially cleared and never reaches the server.
   const alreadyReported = (id: string) =>
     !!window.localStorage.getItem(`punerents_reported_${id}`);
   const markReported = (id: string) =>
     window.localStorage.setItem(`punerents_reported_${id}`, "1");
 
-  const handleReport = async (pinId: string) => {
+  // Flagging now asks why first; FlagModal collects the reason and calls back.
+  const handleReport = (pinId: string) => {
     setSelectedPinId(null);
     if (pinId.startsWith("seed-")) {
       setToast("Demo pin - flagging works on real pins once Supabase is live.");
       return;
     }
     if (alreadyReported(pinId)) {
-      setToast("You've already flagged this pin - others' flags will hide it.");
+      setToast("You've already flagged this pin - it's with our reviewers.");
       return;
     }
+    setFlagging({ kind: "pin", id: pinId });
+  };
+
+  const submitFlag = async (flag: PinFlag) => {
+    if (!flagging) return;
+    const { kind, id } = flagging;
     try {
-      await reportPin(pinId);
-      markReported(pinId);
-      // Reflect the flag on the map immediately; 3 reports hides the pin.
-      setPins((prev) =>
-        prev
-          .map((p) =>
-            p.id === pinId ? { ...p, report_count: p.report_count + 1 } : p
+      if (kind === "pin") {
+        await reportPin(id, flag);
+        // Show the flag on the pin straight away. Note it is NOT removed from
+        // the map: flags queue a pin for review, they don't hide it.
+        setPins((prev) =>
+          prev.map((p) =>
+            p.id === id ? { ...p, report_count: p.report_count + 1 } : p
           )
-          .filter((p) => p.report_count < 3)
-      );
-      setToast("Reported. Pins are hidden automatically after 3 reports.");
+        );
+      } else {
+        await reportToLet(id, flag);
+      }
+      markReported(id);
+      setFlagging(null);
+      setToast("Thanks - flagged for review. A human checks every one.");
     } catch (e) {
-      setToast(e instanceof Error ? e.message : "Report failed.");
+      throw e instanceof Error ? e : new Error("Flag failed.");
     }
   };
 
@@ -432,19 +452,13 @@ export default function App() {
     );
   }, []);
 
-  const handleReportToLet = async (spotId: string) => {
+  const handleReportToLet = (spotId: string) => {
     setSelectedToLetId(null);
     if (alreadyReported(spotId)) {
-      setToast("You've already flagged this spot - others' flags will hide it.");
+      setToast("You've already flagged this spot - it's with our reviewers.");
       return;
     }
-    try {
-      await reportToLet(spotId);
-      markReported(spotId);
-      setToast("Reported. Spots are hidden automatically after 3 reports.");
-    } catch (e) {
-      setToast(e instanceof Error ? e.message : "Report failed.");
-    }
+    setFlagging({ kind: "tolet", id: spotId });
   };
 
   const handleToggleAvailable = async () => {
@@ -935,6 +949,13 @@ export default function App() {
           spot={selectedToLet}
           onClose={() => setSelectedToLetId(null)}
           onReport={handleReportToLet}
+        />
+      )}
+      {flagging && (
+        <FlagModal
+          target={flagging.kind}
+          onClose={() => setFlagging(null)}
+          onSubmit={submitFlag}
         />
       )}
 

@@ -6,6 +6,7 @@ import {
   NewSeeker,
   NewToLetSpot,
   PinComment,
+  PinFlag,
   RatingSummary,
   RentPin,
   ToLetSpot,
@@ -212,9 +213,17 @@ export async function availableFlats(): Promise<MatchPreviewItem[]> {
   return readLocalListings().map(localListingToPreview);
 }
 
-export async function reportPin(pinId: string): Promise<void> {
+// A flag carries its reason to the server, which records one row per reporter
+// and weighs it (schema v9). It never deletes a pin by itself - the RPC only
+// updates the pin's score and queue state.
+export async function reportPin(pinId: string, flag: PinFlag): Promise<void> {
   if (!supabase || pinId.startsWith("seed-")) return; // no-op in demo mode
-  await submit("report_pin", { pin_id: pinId });
+  await submit("report_pin", {
+    pin_id: pinId,
+    reason: flag.reason,
+    claimed_rent: flag.claimed_rent ?? null,
+    note: flag.note ?? null,
+  });
 }
 
 // --- Ratings & comments -----------------------------------------------------
@@ -365,9 +374,13 @@ export async function addToLet(
   return spot;
 }
 
-export async function reportToLet(spotId: string): Promise<void> {
+export async function reportToLet(spotId: string, flag: PinFlag): Promise<void> {
   if (!supabase) return;
-  await submit("report_tolet", { spot_id: spotId });
+  await submit("report_tolet", {
+    spot_id: spotId,
+    reason: flag.reason,
+    note: flag.note ?? null,
+  });
 }
 
 // --- Feedback ("Request a feature" in the Live Stats modal) ------------------

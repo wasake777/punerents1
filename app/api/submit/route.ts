@@ -34,7 +34,15 @@ interface KindConfig {
   emailOptional?: boolean; // empty/absent emailField becomes null instead of 400
   phoneField?: string; // normalized to E.164 (privacy + email/SMS safety)
   tolerateDuplicate?: boolean; // 23505 treated as success (idempotent inserts)
+  injectReporter?: boolean; // RPC also receives the caller's hashed IP
 }
+
+// Flag reasons accepted per kind. Kept in sync with the DB check constraints -
+// an unknown reason is rejected here so a bad value never reaches the RPC.
+const REPORT_REASONS: Record<string, string[]> = {
+  report_pin: ["wrong_price", "not_a_rental", "spam", "duplicate", "offensive", "other"],
+  report_tolet: ["not_a_rental", "spam", "duplicate", "offensive", "other"],
+};
 
 const KINDS: Record<string, KindConfig> = {
   pin: {
@@ -90,8 +98,18 @@ const KINDS: Record<string, KindConfig> = {
     tolerateDuplicate: true,
     columns: ["lat", "lng", "email"],
   },
-  report_pin: { max: 10, window: 60, rpc: "report_pin", columns: ["pin_id"] },
-  report_tolet: { max: 10, window: 60, rpc: "report_tolet", columns: ["spot_id"] },
+  // Flagging is the cheapest way to remove someone else's data, so it gets the
+  // same captcha as the big forms and a tighter limit than the old 10/hour.
+  // reporter_hash is injected server-side (injectReporter) - the browser must
+  // not be able to choose its own identity for the one-flag-per-person rule.
+  report_pin: {
+    max: 5, window: 60, captcha: true, rpc: "report_pin", injectReporter: true,
+    columns: ["pin_id", "reason", "claimed_rent", "note"],
+  },
+  report_tolet: {
+    max: 5, window: 60, captcha: true, rpc: "report_tolet", injectReporter: true,
+    columns: ["spot_id", "reason", "note"],
+  },
   feedback: {
     max: 5, window: 60,
     table: "feedback", emailField: "email", emailOptional: true,
@@ -276,6 +294,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (config.rpc) {
+    const reasons = REPORT_REASONS[kind];
+    if (reasons && !reasons.includes(String(row.reason))) {
+      return bad("Pick a reason for the flag.");
+    }
+    if (config.injectReporter) row.reporter_hash = ipHash;
     const { error } = await supabase.rpc(config.rpc, row);
     if (error) return bad(error.message);
     return NextResponse.json({ ok: true });

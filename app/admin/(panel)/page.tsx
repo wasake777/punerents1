@@ -68,9 +68,26 @@ interface ReportedPin {
   rent: number;
   bhk: string;
   report_count: number;
+  report_score: number | null;
+  moderation_state: string | null;
   hidden: boolean;
   created_at: string;
 }
+
+interface ReasonRow {
+  pin_id: string;
+  reason: string;
+  claimed_rent: number | null;
+}
+
+const REASON_LABELS: Record<string, string> = {
+  wrong_price: "wrong rent",
+  not_a_rental: "not a rental",
+  spam: "spam",
+  duplicate: "duplicate",
+  offensive: "offensive",
+  other: "other",
+};
 
 export default async function Dashboard() {
   const sb = adminDb();
@@ -106,10 +123,29 @@ export default async function Dashboard() {
 
   const { data: reportedPins } = await sb
     .from("rent_pins")
-    .select("id, lat, lng, rent, bhk, report_count, hidden, created_at")
+    .select("id, lat, lng, rent, bhk, report_count, report_score, hidden, moderation_state, created_at")
     .gt("report_count", 0)
-    .order("report_count", { ascending: false })
+    .order("report_score", { ascending: false })
     .limit(10);
+
+  // Why each pin was flagged. Ranking by score rather than raw count matters:
+  // three flags fired off together by fresh devices score far below three that
+  // arrived independently over a week (schema v9), so a staged campaign sinks
+  // down this list instead of straight to the top. Missing table = v9 not
+  // applied yet, and the queue simply renders without reasons.
+  const { data: reasonRows } = await sb
+    .from("pin_reports")
+    .select("pin_id, reason, claimed_rent")
+    .eq("resolved", false)
+    .in("pin_id", (reportedPins ?? []).map((p) => (p as ReportedPin).id));
+
+  const reasonsByPin = new Map<string, string[]>();
+  for (const r of (reasonRows ?? []) as ReasonRow[]) {
+    const label = r.claimed_rent
+      ? `${REASON_LABELS[r.reason] ?? r.reason} (says ${formatINR(r.claimed_rent)})`
+      : REASON_LABELS[r.reason] ?? r.reason;
+    reasonsByPin.set(r.pin_id, [...(reasonsByPin.get(r.pin_id) ?? []), label]);
+  }
 
   return (
     <div>
@@ -185,6 +221,7 @@ export default async function Dashboard() {
             <thead>
               <tr>
                 <Th>Reports</Th>
+                <Th>Why</Th>
                 <Th>Pin</Th>
                 <Th>Location</Th>
                 <Th>Status</Th>
@@ -198,6 +235,14 @@ export default async function Dashboard() {
                     <Badge tone={p.report_count >= 3 ? "rose" : "amber"}>
                       {p.report_count}
                     </Badge>
+                    <span className="ml-1 text-xs text-slate-400">
+                      score {p.report_score?.toFixed(1) ?? "-"}
+                    </span>
+                  </Td>
+                  <Td>
+                    <span className="text-xs text-slate-600">
+                      {reasonsByPin.get(p.id)?.join(", ") ?? "-"}
+                    </span>
                   </Td>
                   <Td>
                     {p.bhk} · {formatINR(p.rent)}
@@ -206,10 +251,12 @@ export default async function Dashboard() {
                     <MapLink lat={p.lat} lng={p.lng} />
                   </Td>
                   <Td>
-                    {p.hidden ? (
+                    {p.moderation_state === "approved" ? (
+                      <Badge tone="emerald">approved</Badge>
+                    ) : p.hidden ? (
                       <Badge tone="rose">hidden</Badge>
                     ) : (
-                      <Badge tone="emerald">visible</Badge>
+                      <Badge tone="amber">queued</Badge>
                     )}
                   </Td>
                   <Td>{daysAgo(p.created_at)}</Td>

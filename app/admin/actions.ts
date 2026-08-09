@@ -113,10 +113,17 @@ export async function setPinHidden(id: string, hidden: boolean) {
   );
 }
 
-/** Dismiss community reports: reset the counter and bring the pin back. */
+/**
+ * "This pin stays." Resolves the open flags (keeping them for history) and
+ * marks the pin approved, so no future flag can auto-hide it.
+ *
+ * The old version just set report_count back to 0, which handed anyone willing
+ * to flag it again a fresh run at the threshold - the moderator could never
+ * actually win. approve_pin (schema v9) makes the decision stick.
+ */
 export async function clearPinReports(id: string) {
-  await run("/admin/pins", "pin.clear_reports", id, (sb) =>
-    sb.from("rent_pins").update({ report_count: 0, hidden: false }).eq("id", id)
+  await run("/admin/pins", "pin.approve", id, (sb) =>
+    sb.rpc("approve_pin", { p_pin_id: id })
   );
 }
 
@@ -166,12 +173,10 @@ export async function setToletHidden(id: string, hidden: boolean) {
   );
 }
 
+/** As clearPinReports, for spotted To-Let boards. */
 export async function clearToletReports(id: string) {
-  await run("/admin/tolets", "tolet.clear_reports", id, (sb) =>
-    sb
-      .from("tolet_spots")
-      .update({ report_count: 0, hidden: false })
-      .eq("id", id)
+  await run("/admin/tolets", "tolet.approve", id, (sb) =>
+    sb.rpc("approve_tolet", { p_spot_id: id })
   );
 }
 

@@ -635,3 +635,311 @@ create table if not exists feedback (
 alter table feedback enable row level security;
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- v9: a flag becomes evidence, not a verdict.
+--
+-- The old rule was `report_count >= 3 -> hidden`, and the only thing stopping
+-- one person casting all three was a localStorage key in their own browser.
+-- Three phones - or one phone and three private windows - removed any pin in
+-- seconds, and an admin "restore" reset the counter to 0 so the same three
+-- clicks worked again immediately.
+--
+-- No threshold survives that: raise it to 5 and the attacker uses 5 phones.
+-- So flags no longer delete anything by themselves. Each one is a row with a
+-- reason, a reporter fingerprint and a weight; it raises the pin's score and
+-- queues it for review. Auto-hide fires only on a shape that is expensive to
+-- fake - several independent reporters, spread over days, on a pin nobody has
+-- corroborated - and an admin decision is permanent.
+--
+-- The weights deliberately invert the old behaviour: a burst of flags on one
+-- pin from devices with no history used to be the fastest route to deletion.
+-- It is now the least persuasive evidence the system can receive.
+-- ---------------------------------------------------------------------------
+
+create table if not exists pin_reports (
+  id            uuid primary key default gen_random_uuid(),
+  pin_id        uuid not null references rent_pins(id) on delete cascade,
+  -- Same hashed IP /api/submit already uses for rate limiting. Imperfect
+  -- (mobile CGNAT collapses many users onto one hash, VPNs mint new ones),
+  -- which is exactly why it decides a queue position and never a deletion.
+  reporter_hash text not null,
+  reason        text not null check (reason in
+                  ('wrong_price', 'not_a_rental', 'spam', 'duplicate', 'offensive', 'other')),
+  -- "The rent is wrong" is checkable; "this is bad" is not. Independent
+  -- tenants converge on a number without conferring, so agreement between
+  -- claimed_rent values is real evidence and disagreement is a tell.
+  -- Same range as rent_pins.rent, so a claimed correction is always a value
+  -- the pin itself could legally hold.
+  claimed_rent  integer check (claimed_rent is null or claimed_rent between 1000 and 2000000),
+  note          text check (note is null or char_length(note) <= 300),
+  weight        real not null default 1,
+  resolved      boolean not null default false,
+  created_at    timestamptz not null default now(),
+  -- One flag per reporter per pin, enforced server-side. Named explicitly so
+  -- report_pin can target it by name: `on conflict (pin_id, ...)` is ambiguous
+  -- inside a function that also has a pin_id parameter.
+  constraint pin_reports_one_per_reporter unique (pin_id, reporter_hash)
+);
+alter table pin_reports enable row level security;
+create index if not exists pin_reports_pin_idx on pin_reports (pin_id);
+
+create table if not exists tolet_reports (
+  id            uuid primary key default gen_random_uuid(),
+  spot_id       uuid not null references tolet_spots(id) on delete cascade,
+  reporter_hash text not null,
+  reason        text not null check (reason in
+                  ('not_a_rental', 'spam', 'duplicate', 'offensive', 'other')),
+  note          text check (note is null or char_length(note) <= 300),
+  weight        real not null default 1,
+  resolved      boolean not null default false,
+  created_at    timestamptz not null default now(),
+  constraint tolet_reports_one_per_reporter unique (spot_id, reporter_hash)
+);
+alter table tolet_reports enable row level security;
+create index if not exists tolet_reports_spot_idx on tolet_reports (spot_id);
+
+-- 'ok' -> nothing pending. 'queued' -> flagged, still visible, awaiting review.
+-- 'hidden' -> auto-hidden or admin-removed. 'approved' -> admin says it stays;
+-- further flags are recorded but can never hide it again.
+alter table rent_pins   add column if not exists moderation_state text not null default 'ok';
+alter table tolet_spots add column if not exists moderation_state text not null default 'ok';
+alter table rent_pins   add column if not exists report_score real not null default 0;
+alter table tolet_spots add column if not exists report_score real not null default 0;
+
+do $$ begin
+  alter table rent_pins add constraint rent_pins_moderation_state_check
+    check (moderation_state in ('ok', 'queued', 'hidden', 'approved'));
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table tolet_spots add constraint tolet_spots_moderation_state_check
+    check (moderation_state in ('ok', 'queued', 'hidden', 'approved'));
+exception when duplicate_object then null; end $$;
+
+-- How much a single flag is worth. Starts at 1 and is discounted by the two
+-- signatures of a staged campaign; a checkable claim earns a premium.
+create or replace function report_weight(
+  p_reporter text, p_recent_on_target integer, p_has_claim boolean
+)
+returns real
+language plpgsql
+immutable
+set search_path = public
+as $$
+declare w real := 1;
+begin
+  -- A device that has never written anything here before is the cheapest thing
+  -- an attacker can produce, so its first flag barely counts. This also damps
+  -- a genuine first-time flagger - intended: one stranger's click should never
+  -- be enough on its own, no matter who they are.
+  if p_reporter is null then
+    w := w * 0.3;
+  end if;
+  -- Flags arriving together on one pin are worth progressively less. Real
+  -- reports trickle in over days; three in five minutes is a coordinated push.
+  if p_recent_on_target > 0 then
+    w := w / (1 + p_recent_on_target);
+  end if;
+  if p_has_claim then
+    w := w * 1.5;
+  end if;
+  return w;
+end;
+$$;
+
+drop function if exists report_pin(uuid);
+create or replace function report_pin(
+  pin_id uuid,
+  reason text,
+  reporter_hash text,
+  claimed_rent integer default null,
+  note text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state    text;
+  v_prior    integer;
+  v_recent   integer;
+  v_weight   real;
+  v_distinct integer;
+  v_score    real;
+  v_spread   interval;
+  v_ratings  integer;
+  v_hide     boolean;
+begin
+  select moderation_state, rating_count into v_state, v_ratings
+    from rent_pins where id = pin_id;
+  if not found then
+    return;
+  end if;
+
+  -- "Has this connection ever done anything here before now?" write_log only
+  -- records writes, so a pure lurker looks new too - deliberately strict.
+  select count(*) into v_prior from write_log
+   where ip_hash = reporter_hash and created_at < now() - interval '1 hour';
+
+  select count(*) into v_recent from pin_reports
+   where pin_reports.pin_id = report_pin.pin_id
+     and created_at > now() - interval '30 minutes';
+
+  v_weight := report_weight(
+    case when v_prior > 0 then reporter_hash else null end,
+    v_recent,
+    reason = 'wrong_price' and claimed_rent is not null
+  );
+
+  -- One flag per reporter per pin. A second attempt is silently ignored rather
+  -- than erroring, so the UI can stay simple.
+  insert into pin_reports (pin_id, reporter_hash, reason, claimed_rent, note, weight)
+  values (report_pin.pin_id, report_pin.reporter_hash, report_pin.reason,
+          report_pin.claimed_rent, nullif(report_pin.note, ''), v_weight)
+  on conflict on constraint pin_reports_one_per_reporter do nothing;
+
+  -- Always recomputed from the rows, never incremented, so the counter cannot
+  -- drift away from the evidence behind it.
+  select count(*), coalesce(sum(weight), 0),
+         coalesce(max(created_at) - min(created_at), interval '0')
+    into v_distinct, v_score, v_spread
+    from pin_reports
+   where pin_reports.pin_id = report_pin.pin_id and resolved = false;
+
+  -- Auto-hide only where faking it is genuinely costly: three separate
+  -- reporters, holding the complaint for a day, carrying real weight, against
+  -- a pin nobody has rated. Anything else waits for a human.
+  v_hide := v_state <> 'approved'
+        and v_distinct >= 3
+        and v_spread >= interval '24 hours'
+        and v_score >= 2.5
+        and coalesce(v_ratings, 0) = 0;
+
+  update rent_pins
+     set report_count = v_distinct,
+         report_score = v_score,
+         moderation_state = case
+           when v_state = 'approved' then 'approved'
+           when v_hide then 'hidden'
+           else 'queued'
+         end,
+         hidden = case when v_hide then true else hidden end
+   where id = report_pin.pin_id;
+end;
+$$;
+
+drop function if exists report_tolet(uuid);
+create or replace function report_tolet(
+  spot_id uuid,
+  reason text,
+  reporter_hash text,
+  note text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state    text;
+  v_prior    integer;
+  v_recent   integer;
+  v_weight   real;
+  v_distinct integer;
+  v_score    real;
+  v_spread   interval;
+  v_hide     boolean;
+begin
+  select moderation_state into v_state from tolet_spots where id = spot_id;
+  if not found then
+    return;
+  end if;
+
+  select count(*) into v_prior from write_log
+   where ip_hash = reporter_hash and created_at < now() - interval '1 hour';
+
+  select count(*) into v_recent from tolet_reports
+   where tolet_reports.spot_id = report_tolet.spot_id
+     and created_at > now() - interval '30 minutes';
+
+  v_weight := report_weight(
+    case when v_prior > 0 then reporter_hash else null end, v_recent, false
+  );
+
+  insert into tolet_reports (spot_id, reporter_hash, reason, note, weight)
+  values (report_tolet.spot_id, report_tolet.reporter_hash, report_tolet.reason,
+          nullif(report_tolet.note, ''), v_weight)
+  on conflict on constraint tolet_reports_one_per_reporter do nothing;
+
+  select count(*), coalesce(sum(weight), 0),
+         coalesce(max(created_at) - min(created_at), interval '0')
+    into v_distinct, v_score, v_spread
+    from tolet_reports
+   where tolet_reports.spot_id = report_tolet.spot_id and resolved = false;
+
+  v_hide := v_state <> 'approved'
+        and v_distinct >= 3
+        and v_spread >= interval '24 hours'
+        and v_score >= 2.5;
+
+  update tolet_spots
+     set report_count = v_distinct,
+         report_score = v_score,
+         moderation_state = case
+           when v_state = 'approved' then 'approved'
+           when v_hide then 'hidden'
+           else 'queued'
+         end,
+         hidden = case when v_hide then true else hidden end
+   where id = report_tolet.spot_id;
+end;
+$$;
+
+-- Admin "this pin stays": resolves the open flags, keeps them for history, and
+-- marks the pin approved so no future flag can auto-hide it. Replaces the old
+-- reset-to-zero, which handed the same three clicks a fresh run every time.
+create or replace function approve_pin(p_pin_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update pin_reports set resolved = true where pin_id = p_pin_id;
+  update rent_pins
+     set hidden = false, report_count = 0, report_score = 0,
+         moderation_state = 'approved'
+   where id = p_pin_id;
+$$;
+
+create or replace function approve_tolet(p_spot_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update tolet_reports set resolved = true where spot_id = p_spot_id;
+  update tolet_spots
+     set hidden = false, report_count = 0, report_score = 0,
+         moderation_state = 'approved'
+   where id = p_spot_id;
+$$;
+
+-- Recreating a function resets its privileges, and Postgres grants EXECUTE to
+-- PUBLIC by default - so lock the new signatures down exactly like v4.1 did.
+revoke execute on function report_pin(uuid, text, text, integer, text)
+  from public, anon, authenticated;
+revoke execute on function report_tolet(uuid, text, text, text)
+  from public, anon, authenticated;
+revoke execute on function report_weight(text, integer, boolean)
+  from public, anon, authenticated;
+revoke execute on function approve_pin(uuid) from public, anon, authenticated;
+revoke execute on function approve_tolet(uuid) from public, anon, authenticated;
+
+grant execute on function report_pin(uuid, text, text, integer, text) to service_role;
+grant execute on function report_tolet(uuid, text, text, text) to service_role;
+grant execute on function report_weight(text, integer, boolean) to service_role;
+grant execute on function approve_pin(uuid) to service_role;
+grant execute on function approve_tolet(uuid) to service_role;
+
+notify pgrst, 'reload schema';
