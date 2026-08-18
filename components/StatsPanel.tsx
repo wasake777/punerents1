@@ -76,15 +76,20 @@ export function StatsCard({ pins, bhkFilter }: Props) {
 // memo: the parent re-renders on every toast/selection/modal change, but the
 // pins array identity only changes when the viewport or filter does.
 export default memo(function StatsPanel({ pins, bhkFilter }: Props) {
-  const [open, setOpen] = useState(true);
+  // Closed by default: the map is the product, and the full card is one tap
+  // away. The chip keeps the live in-view count visible either way.
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="hidden w-60 md:block">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
         className="mb-1.5 ml-auto block rounded-full bg-white/95 px-3 py-1.5 text-[13px] font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800"
       >
-        {open ? "Hide stats" : "📊 Area stats"}
+        {open
+          ? "✕ Hide stats"
+          : `📊 Stats · ${pins.length.toLocaleString("en-IN")} ${pins.length === 1 ? "pin" : "pins"} here`}
       </button>
 
       {open && <StatsCard pins={pins} bhkFilter={bhkFilter} />}

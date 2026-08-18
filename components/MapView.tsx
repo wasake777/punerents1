@@ -716,8 +716,13 @@ export default function MapView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !focus) return;
-    map.panTo({ lat: focus.lat, lng: focus.lng });
-    map.setZoom(focus.zoom ?? 15);
+    // Center and zoom must change atomically: panTo starts an animated pan
+    // that a following setZoom cancels mid-flight, stranding the camera
+    // between the old and new center.
+    map.moveCamera({
+      center: { lat: focus.lat, lng: focus.lng },
+      zoom: focus.zoom ?? 15,
+    });
   }, [focus, mapReady]);
 
   // "My current location" → blue dot + accuracy circle + fly-to.

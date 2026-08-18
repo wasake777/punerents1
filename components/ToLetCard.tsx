@@ -28,22 +28,18 @@ export default function ToLetCard({ spot, onClose, onReport }: Props) {
           </p>
           <p className="text-xs text-slate-400">Spotted {daysAgo(spot.created_at)}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onReport(spot.id)}
-            title="Flag as wrong or spam"
-            className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-slate-100"
-          >
-            🚩
-          </button>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg px-2 py-1 text-lg leading-none text-slate-400 hover:bg-slate-100"
-          >
-            ×
-          </button>
-        </div>
+        {/* Ghost icon button with a full 40px hit area. The 🚩 flag lives at
+            the bottom of the card, away from close - side by side they
+            collected each other's mis-taps on mobile. */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="-mr-2 -mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:bg-slate-200"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
       </div>
 
       <div className="space-y-3 p-4">
@@ -98,8 +94,15 @@ export default function ToLetCard({ spot, onClose, onReport }: Props) {
 
         <p className="text-[11px] leading-snug text-slate-400">
           Call the number on the board directly - no broker involved. If the
-          board is gone, flag this pin so we can take it down.
+          board is gone, flag this spot so we can take it down.
         </p>
+
+        <button
+          onClick={() => onReport(spot.id)}
+          className="mx-auto flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+        >
+          🚩 Flag this spot
+        </button>
       </div>
       </div>
     </div>

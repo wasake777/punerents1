@@ -144,10 +144,11 @@ const GLASS_BTN =
   "rounded-full bg-white/95 px-3.5 py-2 text-[13px] font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800";
 const GLASS_BTN_ON =
   "rounded-full bg-slate-900 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-slate-900/25 backdrop-blur-md transition dark:bg-slate-100 dark:text-slate-900";
-const CTA_EMERALD =
-  "rounded-full bg-emerald-600 text-[15px] font-bold text-white shadow-lg shadow-emerald-600/40 transition hover:bg-emerald-500 active:scale-[0.98]";
-const CTA_ORANGE =
-  "rounded-full bg-orange-600 text-[15px] font-bold text-white shadow-lg shadow-orange-600/40 transition hover:bg-orange-500 active:scale-[0.98]";
+// Row inside a desktop dropdown menu (View / More).
+const MENU_ROW =
+  "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-[13px] font-bold text-slate-900 transition hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-700/50";
+const MENU_CARD =
+  "absolute right-0 top-full z-20 mt-1.5 w-52 rounded-2xl bg-white p-1.5 shadow-xl shadow-slate-900/15 ring-1 ring-slate-900/10 dark:bg-slate-800 dark:ring-white/10";
 
 const TRANSIT_LEGEND: [string, string][] = [
   ["#9333ea", "Purple Line"],
@@ -203,6 +204,9 @@ export default function App() {
   const [locate, setLocate] = useState<number | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  // Desktop header dropdowns: map-view toggles and everything-else.
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   // Mobile-only UI: stats card inside the ⋮ menu, collapsed BHK legend.
   const [mobileStats, setMobileStats] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
@@ -554,8 +558,32 @@ export default function App() {
     </button>
   ));
 
-  // Secondary map controls, rendered as a row on md+ and inside the mobile
-  // "⋮" menu below that breakpoint.
+  const cityToggle = (
+    <div className="flex overflow-hidden rounded-full bg-white/95 text-[13px] font-bold shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
+      {(
+        [
+          ["pune", "Pune"],
+          ["pcmc", "PCMC"],
+        ] as [City, string][]
+      ).map(([key, label]) => (
+        <button
+          key={key}
+          onClick={() => setCity(key)}
+          className={`px-3.5 py-2 transition ${
+            city === key
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+              : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Secondary map controls as a flat list - mobile "⋮" menu only. The desktop
+  // header groups the same controls into View/More dropdowns (below) so the
+  // map isn't buried under a wall of pills.
   const secondaryControls = (
     <>
       {myPins.length > 0 && (
@@ -613,25 +641,127 @@ export default function App() {
       >
         🛰 Satellite
       </button>
-      <div className="flex overflow-hidden rounded-full bg-white/95 text-[13px] font-bold shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
-        {(
-          [
-            ["pune", "Pune"],
-            ["pcmc", "Pimpri-Chinchwad"],
-          ] as [City, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setCity(key)}
-            className={`px-3.5 py-2 transition ${
-              city === key
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {cityToggle}
+    </>
+  );
+
+  // Desktop header: only the everyday controls stay as pills; map-view
+  // toggles fold into "View" and the rest into "More".
+  const viewToggleCount = (showTransit ? 1 : 0) + (basemap === "satellite" ? 1 : 0);
+  const desktopControls = (
+    <>
+      {myPins.length > 0 && (
+        <button
+          onClick={handleMyPin}
+          className="rounded-full bg-emerald-600 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-emerald-600/40 transition hover:bg-emerald-500"
+        >
+          📍 {myPins.length > 1 ? `My pins (${myPins.length})` : "My pin"}
+        </button>
+      )}
+      <button
+        onClick={handleToggleAvailable}
+        className={
+          availableMode
+            ? "rounded-full bg-orange-600 px-3.5 py-2 text-[13px] font-bold text-white shadow-lg shadow-orange-600/40 transition"
+            : GLASS_BTN
+        }
+      >
+        🏠 Available flats
+      </button>
+      {cityToggle}
+      <div className="relative">
+        <button
+          onClick={() => {
+            setViewMenuOpen((o) => !o);
+            setMoreMenuOpen(false);
+          }}
+          aria-expanded={viewMenuOpen}
+          className={viewToggleCount > 0 ? GLASS_BTN_ON : GLASS_BTN}
+        >
+          🗺 View{viewToggleCount > 0 ? ` · ${viewToggleCount}` : ""} ▾
+        </button>
+        {viewMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setViewMenuOpen(false)} />
+            <div className={MENU_CARD}>
+              <button
+                onClick={() => setBasemap((b) => (b === "streets" ? "satellite" : "streets"))}
+                className={MENU_ROW}
+              >
+                <span>🛰 Satellite</span>
+                {basemap === "satellite" && <span className="text-emerald-600 dark:text-emerald-400">✓</span>}
+              </button>
+              <button onClick={() => setShowTransit((s) => !s)} className={MENU_ROW}>
+                <span>🚇 Metro lines</span>
+                {showTransit && <span className="text-emerald-600 dark:text-emerald-400">✓</span>}
+              </button>
+              <ThemeToggle showLabel onChange={setTheme} className={MENU_ROW} />
+            </div>
+          </>
+        )}
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => {
+            setMoreMenuOpen((o) => !o);
+            setViewMenuOpen(false);
+          }}
+          aria-expanded={moreMenuOpen}
+          aria-label="More"
+          className={GLASS_BTN}
+        >
+          ⋯
+        </button>
+        {moreMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setMoreMenuOpen(false)} />
+            <div className={MENU_CARD}>
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(false);
+                  setShowLiveStats(true);
+                }}
+                className={MENU_ROW}
+              >
+                <span>📊 Live stats</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(false);
+                  setTourOpen(true);
+                }}
+                className={MENU_ROW}
+              >
+                <span>🎓 Take the tour</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(false);
+                  setShowSuperheroes(true);
+                }}
+                className={MENU_ROW}
+              >
+                <span>🪧 To-Let spotters</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMoreMenuOpen(false);
+                  handleShareApp();
+                }}
+                className={MENU_ROW}
+              >
+                <span>📤 Share app</span>
+              </button>
+              <div className="mx-2 my-1 border-t border-slate-100 dark:border-slate-700" />
+              <a href="/rent" className={MENU_ROW}>
+                <span>🏙 Area rent guide</span>
+              </a>
+              <a href="/about" className={MENU_ROW}>
+                <span>ℹ️ How it works</span>
+              </a>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -684,33 +814,33 @@ export default function App() {
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 p-2 sm:p-3">
         {/* md+: brand card · centered search · action buttons */}
         <div className="hidden items-start justify-between gap-2 md:flex">
-          <div className="pointer-events-auto rounded-2xl bg-white/95 px-4 py-3 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
-            <h1 className="text-xl font-extrabold leading-tight tracking-tight">
-              <Logo size={26} />
+          <div className="pointer-events-auto flex items-center gap-2.5 rounded-full bg-white/95 px-4 py-2.5 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
+            <h1 className="text-xl font-extrabold leading-none tracking-tight">
+              <Logo size={24} />
             </h1>
-            <p className="mt-0.5 text-[13px] font-medium text-slate-600 dark:text-slate-300">
-              What people really pay - tap any price tag ·{" "}
-              <span className="font-bold text-slate-900 dark:text-slate-100">
-                {pins.length.toLocaleString("en-IN")} pins
-              </span>
-              {!isLive && (
-                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-700">
-                  demo data
+            <span className="text-[13px] font-bold text-slate-600 dark:text-slate-300">
+              {pins.length.toLocaleString("en-IN")} pins
+            </span>
+            {isLive ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
-              )}
-            </p>
-            <a
-              href="/rent"
-              className="mt-0.5 inline-block text-[13px] font-bold text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-              Area rent guide →
-            </a>
+                Live
+              </span>
+            ) : (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                demo data
+              </span>
+            )}
           </div>
 
           <div className="flex flex-1 justify-center pt-1">
-            <div data-tour="search" className="w-full max-w-xs">
+            <div data-tour="search" className="w-full max-w-sm">
               <SearchBar
-                onGo={(lat, lng) => setFocus({ lat, lng, at: Date.now() })}
+                pins={pins}
+                onGo={(lat, lng, zoom) => setFocus({ lat, lng, at: Date.now(), zoom })}
                 onLocate={() => setLocate(Date.now())}
               />
             </div>
@@ -725,18 +855,21 @@ export default function App() {
                 ✕ Cancel
               </button>
             ) : (
-              <div className="relative flex flex-wrap justify-end gap-1.5">
+              <div className="relative flex flex-wrap items-center justify-end gap-1.5">
+                {/* Contribution is the product's lifeblood, so "Add to map" is
+                    the loudest thing on the screen; "Find a flat" reads as the
+                    quieter sibling. */}
                 <button
                   data-tour="seek"
                   onClick={() => setPicking("seek")}
-                  className={`${CTA_ORANGE} px-4 py-2.5`}
+                  className="rounded-full bg-white/95 px-4 py-2.5 text-sm font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800"
                 >
                   🔍 Find a flat
                 </button>
                 <button
                   data-tour="add"
                   onClick={() => setAddMenuOpen((o) => !o)}
-                  className={`${CTA_EMERALD} px-4 py-2.5`}
+                  className="rounded-full bg-emerald-600 px-6 py-3 text-base font-extrabold text-white shadow-xl shadow-emerald-600/40 transition hover:bg-emerald-500 active:scale-[0.98]"
                 >
                   ＋ Add to map
                 </button>
@@ -754,7 +887,7 @@ export default function App() {
               </div>
             )}
             <div data-tour="controls" className="flex max-w-md flex-wrap justify-end gap-1.5">
-              {secondaryControls}
+              {desktopControls}
             </div>
             {/* In the column flow (not absolutely pinned) so it always sits
                 below the controls, however many rows they wrap into. */}
@@ -766,7 +899,8 @@ export default function App() {
             the bottom bar so the map stays almost full-screen. */}
         <div data-tour="search" className="relative md:hidden">
           <SearchBar
-            onGo={(lat, lng) => setFocus({ lat, lng, at: Date.now() })}
+            pins={pins}
+            onGo={(lat, lng, zoom) => setFocus({ lat, lng, at: Date.now(), zoom })}
             onLocate={() => setLocate(Date.now())}
             leading={<LogoMark size={22} />}
             trailing={
@@ -790,26 +924,34 @@ export default function App() {
               />
               <div className="pointer-events-auto absolute right-0 top-full z-20 mt-1.5 flex max-h-[70dvh] w-max max-w-[calc(100vw-1rem)] flex-col items-stretch gap-1.5 overflow-y-auto overscroll-contain">
                 <div className="rounded-2xl bg-white/95 px-3.5 py-2.5 text-xs shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md dark:bg-slate-800/95 dark:ring-white/15">
-                  <p className="text-base font-extrabold tracking-tight">
+                  <p className="flex items-center gap-2 text-base font-extrabold tracking-tight">
                     <Logo size={20} />
-                  </p>
-                  <p className="mt-0.5 font-medium text-slate-600 dark:text-slate-300">
-                    What people really pay ·{" "}
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                    <span className="font-bold text-slate-600 dark:text-slate-300">
                       {pins.length.toLocaleString("en-IN")} pins
                     </span>
-                    {!isLive && (
-                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-700">
+                    {isLive ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        </span>
+                        Live
+                      </span>
+                    ) : (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700">
                         demo data
                       </span>
                     )}
                   </p>
-                  <a
-                    href="/rent"
-                    className="mt-0.5 inline-block font-bold text-emerald-700 hover:underline dark:text-emerald-400"
-                  >
-                    Area rent guide →
-                  </a>
+                  <p className="mt-1 font-bold">
+                    <a href="/rent" className="text-emerald-700 hover:underline dark:text-emerald-400">
+                      Area rent guide →
+                    </a>
+                    <span className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+                    <a href="/about" className="text-slate-600 hover:underline dark:text-slate-300">
+                      How it works
+                    </a>
+                  </p>
                 </div>
                 <button
                   onClick={() => setMobileStats((o) => !o)}
@@ -845,11 +987,11 @@ export default function App() {
               <button
                 data-tour="seek"
                 onClick={() => setPicking("seek")}
-                className={`${CTA_ORANGE} flex-1 px-4 py-3`}
+                className="flex-1 rounded-full bg-white/95 px-4 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-slate-900/15 ring-1 ring-slate-900/15 backdrop-blur-md transition hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/15"
               >
                 🔍 Find a flat
               </button>
-              <div className="relative flex-1">
+              <div className="relative flex-[1.4]">
                 {addMenuOpen && (
                   <div
                     className="fixed inset-0 z-10"
@@ -859,7 +1001,7 @@ export default function App() {
                 <button
                   data-tour="add"
                   onClick={() => setAddMenuOpen((o) => !o)}
-                  className={`${CTA_EMERALD} relative z-20 w-full px-4 py-3`}
+                  className="relative z-20 w-full rounded-full bg-emerald-600 px-4 py-3.5 text-base font-extrabold text-white shadow-xl shadow-emerald-600/40 transition hover:bg-emerald-500 active:scale-[0.98]"
                 >
                   ＋ Add to map
                 </button>
