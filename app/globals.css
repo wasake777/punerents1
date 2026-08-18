@@ -59,12 +59,12 @@ input[type="search"]::-webkit-search-cancel-button {
    per marker) with a pointed tail. Anchored bottom-center, so the tail tip
    sits exactly on the coordinate - no separate dot, label or tooltip. */
 .br-pin {
-  --pin: #64748b;
+  --pin: #6d28d9;
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  filter: drop-shadow(0 2px 3px rgb(15 23 42 / 0.35));
+  filter: drop-shadow(0 2px 4px rgb(15 23 42 / 0.45));
   transform-origin: bottom center;
   transition: transform 0.15s ease;
 }
@@ -86,13 +86,21 @@ input[type="search"]::-webkit-search-cancel-button {
   white-space: nowrap;
   text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
   font-family: inherit;
+  /* White ring lifts the pill off dark tiles; the deep fill colours carry the
+     contrast on light tiles (where the ring blends away harmlessly). */
+  box-shadow:
+    0 0 0 1.5px rgb(255 255 255 / 0.95),
+    0 1px 3px rgb(0 0 0 / 0.35);
 }
-/* Tail: a rotated square tucked under the pill; only its lower corner shows. */
+/* Tail: a rotated square tucked under the pill; only its lower corner shows,
+   so only its lower two edges carry the white ring. */
 .br-tag-tail {
   width: 8px;
   height: 8px;
   background: var(--pin);
   border-radius: 1.5px;
+  border-right: 1.5px solid rgb(255 255 255 / 0.95);
+  border-bottom: 1.5px solid rgb(255 255 255 / 0.95);
   transform: translateY(-4.5px) rotate(45deg);
 }
 .br-tag-star {
@@ -109,7 +117,11 @@ input[type="search"]::-webkit-search-cancel-button {
   transform: scale(1.18);
 }
 .br-pin-selected .br-tag {
-  box-shadow: 0 0 0 2px #ffffff;
+  /* Every tag now wears a white ring, so "selected" adds a dark outer ring -
+     visible on light tiles where white alone would vanish. */
+  box-shadow:
+    0 0 0 2.5px #ffffff,
+    0 0 0 4px rgb(15 23 42 / 0.55);
 }
 /* Freshly added pin: pops in, then pulses an emerald ring so the author can
    spot their contribution. Applied for a few seconds via .br-pin-new. */
@@ -129,12 +141,18 @@ input[type="search"]::-webkit-search-cancel-button {
     transform: scale(1);
   }
 }
+/* Animating box-shadow replaces the tag's static white ring, so every frame
+   restates it first. */
 @keyframes br-pin-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(16 185 129 / 0.65);
+    box-shadow:
+      0 0 0 1.5px rgb(255 255 255 / 0.95),
+      0 0 0 0 rgb(16 185 129 / 0.65);
   }
   100% {
-    box-shadow: 0 0 0 18px rgb(16 185 129 / 0);
+    box-shadow:
+      0 0 0 1.5px rgb(255 255 255 / 0.95),
+      0 0 0 18px rgb(16 185 129 / 0);
   }
 }
 .br-pin-reports {
@@ -170,13 +188,19 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 @keyframes br-match-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(234 88 12 / 0.55);
+    box-shadow:
+      0 0 0 1.5px rgb(255 255 255 / 0.95),
+      0 0 0 0 rgb(234 88 12 / 0.55);
   }
   70% {
-    box-shadow: 0 0 0 12px rgb(234 88 12 / 0);
+    box-shadow:
+      0 0 0 1.5px rgb(255 255 255 / 0.95),
+      0 0 0 12px rgb(234 88 12 / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(234 88 12 / 0);
+    box-shadow:
+      0 0 0 1.5px rgb(255 255 255 / 0.95),
+      0 0 0 0 rgb(234 88 12 / 0);
   }
 }
 

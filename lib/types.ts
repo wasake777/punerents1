@@ -136,12 +136,15 @@ export interface NewToLetSpot {
   message: string | null;
 }
 
+// Deep jewel tones: every colour keeps white label text readable AND stands
+// apart from both the light and dark basemap tiles (the old slate/sky/amber
+// washed out on one theme or the other).
 export const BHK_COLORS: Record<Bhk, string> = {
-  "1RK": "#64748b",
-  "1BHK": "#0ea5e9",
-  "2BHK": "#10b981",
-  "3BHK": "#f59e0b",
-  "4BHK+": "#ec4899",
+  "1RK": "#6d28d9",
+  "1BHK": "#1d4ed8",
+  "2BHK": "#047857",
+  "3BHK": "#b45309",
+  "4BHK+": "#be185d",
 };
 
 /** "30K", "1.2L" - the compact rupee format used on map pin labels. */
